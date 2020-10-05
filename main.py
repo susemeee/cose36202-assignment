@@ -7,21 +7,38 @@ from sklearn.naive_bayes import GaussianNB
 import os
 
 
-def load_data(filename, test=False):
-    return pd.read_csv(os.path.join(os.path.dirname(__file__), 'data', filename))
+def preprocess_line_(line):
+    for w in line.split(' '):
+        # all caps has special meaning
+        if w.upper() == w:
+            pass
+        else:
+            line = line.replace(w, w.lower())
+
+    return line
+
+
+def preprocess(data):
+    data['message'] = data['message'].apply(preprocess_line_)
+    return data
+
+
+def load_data(filename, test=False, **kwargs):
+    data = pd.read_csv(os.path.join(os.path.dirname(__file__), 'data', filename), **kwargs)
+    return preprocess(data)
 
 
 def transformer(classifier, vectorizer):
     return lambda message: classifier.predict(vectorizer.transform([message]).toarray())
 
 
-def train(train_data):
-    stopwords = [',', '.', ' ']
+def train(train_data, should_ignore_cases=True):
+    stopwords = [',', '.', ' ', '\\', '"', '\'', '*']
 
     vectorizer = CountVectorizer(analyzer='word', decode_error='strict',
             encoding='utf-8', input='content',
-            lowercase=False, max_df=1.0, max_features=None, min_df=1,
-            ngram_range=(1, 1), stop_words=stopwords,
+            lowercase=should_ignore_cases, max_df=1.0, max_features=None, min_df=1,
+            ngram_range=(1, 3), stop_words=stopwords,
             strip_accents='unicode')
 
     vectorizer.fit(train_data['message'].to_numpy())
@@ -41,16 +58,21 @@ def train(train_data):
     }
 
 
-def test(test_data, classifier, vectorizer):
-
-    tr = transformer(classifier, vectorizer)
+def test(test_data, classifier, vectorizer, is_debug=True):
+    # tr = transformer(classifier, vectorizer)
 
     raw_test_data = test_data['message'].to_numpy()
     X = vectorizer.transform(raw_test_data).toarray()
 
     Y = classifier.predict(X)
 
-    return pd.DataFrame(Y, columns=['label'])
+    if is_debug == True:
+        from debug import debug
+        debug(raw_test_data, load_data, Y)
+
+    test_result = pd.DataFrame(Y, columns=['label'])
+    test_result.insert(0, 'id', test_data['id'])
+    return test_result
 
 
 def main():
@@ -60,7 +82,7 @@ def main():
     test_data = load_data('leaderboard_test_file.csv', test=True)
 
     test_labels = test(test_data, **model)
-    test_labels.to_csv('out.csv')
+    test_labels.to_csv('out.csv', index=False)
 
 if __name__ == '__main__':
     main()
