@@ -140,4 +140,6 @@ cython_debug/
 data/*.zip
 data/*.tsv
 out.csv
+
 .vscode/settings.json
+.DS_Store
