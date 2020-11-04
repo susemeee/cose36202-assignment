@@ -1,5 +1,5 @@
 
-from main import load_data
+from main import load_data, stopwords
 
 import logging
 import numpy as np
@@ -9,8 +9,7 @@ from time import time
 import matplotlib.pyplot as plt
 
 from sklearn.datasets import fetch_20newsgroups
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.feature_extraction.text import HashingVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer, HashingVectorizer
 from sklearn.feature_selection import SelectFromModel
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.linear_model import RidgeClassifier
@@ -22,16 +21,32 @@ from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.naive_bayes import BernoulliNB, ComplementNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import NearestCentroid
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils.extmath import density
 from sklearn import metrics
+from sklearn.metrics import f1_score
 
+
+def get_vectorizer():
+    kwargs = {
+        'analyzer': 'char_wb',
+        'decode_error': 'strict',
+        'encoding': 'utf-8',
+        'input': 'content',
+        'stop_words': stopwords,
+        'strip_accents': 'unicode',
+    }
+
+    return CountVectorizer(**kwargs, ngram_range=(2,3))
+    # return TfidfVectorizer(**kwargs, lowercase=True, min_df=1, sublinear_tf=True, max_df=0.5, ngram_range=(1,2))
 
 # Display progress logs on stdout
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s')
 
 op = OptionParser()
+op.add_option("--plot",
+              action="store_true", dest="plot", default=False,
+              help="Print a plot.")
 op.add_option("--report",
               action="store_true", dest="print_report",
               help="Print a detailed classification report.")
@@ -45,16 +60,9 @@ op.add_option("--top10",
               action="store_true", dest="print_top10",
               help="Print ten most discriminative terms per class"
                    " for every classifier.")
-op.add_option("--use_hashing",
-              action="store_true",
-              help="Use a hashing vectorizer.")
 op.add_option("--n_features",
               action="store", type=int, default=2 ** 16,
               help="n_features when using the hashing vectorizer.")
-op.add_option("--filtered",
-              action="store_true",
-              help="Remove newsgroup information that is easily overfit: "
-                   "headers, signatures, and quoting.")
 
 
 def is_interactive():
@@ -72,11 +80,6 @@ print(__doc__)
 op.print_help()
 print()
 
-if opts.filtered:
-    remove = ('headers', 'footers', 'quotes')
-else:
-    remove = ()
-
 data_train = load_data('train.csv')
 data_test = load_data('gt.tsv', delimiter='\t', names=['label', 'message'], header=None)
 data_test['label'] = data_test['label'].map(lambda k: 1 if k == 'spam' else 0)
@@ -89,14 +92,8 @@ y_train, y_test = data_train['label'].to_numpy(), data_test['label'].to_numpy()
 
 print("Extracting features from the training data using a sparse vectorizer")
 t0 = time()
-if opts.use_hashing:
-    vectorizer = HashingVectorizer(stop_words='english', alternate_sign=False,
-                                    n_features=opts.n_features)
-    X_train = vectorizer.transform(data_train['message'].to_numpy())
-else:
-    vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5,
-                                    stop_words='english')
-    X_train = vectorizer.fit_transform(data_train['message'].to_numpy())
+vectorizer = get_vectorizer()
+X_train = vectorizer.fit_transform(data_train['message'].to_numpy())
 duration = time() - t0
 print("done in %fs" % (duration))
 print("n_samples: %d, n_features: %d" % X_train.shape)
@@ -110,11 +107,7 @@ print("done in %fs" % (duration))
 print("n_samples: %d, n_features: %d" % X_test.shape)
 print()
 
-# mapping from integer feature name to original token string
-if opts.use_hashing:
-    feature_names = None
-else:
-    feature_names = vectorizer.get_feature_names()
+feature_names = vectorizer.get_feature_names()
 
 if opts.select_chi2:
     print("Extracting %d best features by a chi-squared test" %
@@ -132,7 +125,6 @@ if opts.select_chi2:
 
 if feature_names:
     feature_names = np.asarray(feature_names)
-
 
 def trim(s):
     """Trim string to fit on terminal (assuming 80-column display)"""
@@ -154,6 +146,9 @@ def benchmark(clf):
 
     score = metrics.accuracy_score(y_test, pred)
     print("accuracy:   %0.3f" % score)
+
+    fscore = f1_score(y_test, pred)
+    print("F-Score:   %0.3f" % fscore)
 
     if hasattr(clf, 'coef_'):
         print("dimensionality: %d" % clf.coef_.shape[1])
@@ -177,7 +172,7 @@ def benchmark(clf):
 
     print()
     clf_descr = str(clf).split('(')[0]
-    return clf_descr, score, train_time, test_time
+    return clf_descr, score, fscore, train_time, test_time
 
 
 results = []
@@ -186,8 +181,7 @@ for clf, name in (
         (Perceptron(max_iter=50), "Perceptron"),
         (PassiveAggressiveClassifier(max_iter=50),
          "Passive-Aggressive"),
-        (KNeighborsClassifier(n_neighbors=10), "kNN"),
-        (RandomForestClassifier(), "Random forest")):
+        (KNeighborsClassifier(n_neighbors=10), "kNN")):
     print('=' * 80)
     print(name)
     results.append(benchmark(clf))
@@ -232,25 +226,28 @@ results.append(benchmark(Pipeline([
 
 indices = np.arange(len(results))
 
-results = [[x[i] for x in results] for i in range(4)]
+results = [[x[i] for x in results] for i in range(5)]
 
-clf_names, score, training_time, test_time = results
+clf_names, score, fscore, training_time, test_time = results
 training_time = np.array(training_time) / np.max(training_time)
 test_time = np.array(test_time) / np.max(test_time)
 
-plt.figure(figsize=(12, 8))
-plt.title("Score")
-plt.barh(indices, score, .2, label="score", color='navy')
-plt.barh(indices + .3, training_time, .2, label="training time",
-         color='c')
-plt.barh(indices + .6, test_time, .2, label="test time", color='darkorange')
-plt.yticks(())
-plt.legend(loc='best')
-plt.subplots_adjust(left=.25)
-plt.subplots_adjust(top=.95)
-plt.subplots_adjust(bottom=.05)
+print('Max-F: {}'.format(max(fscore)))
+if opts.plot:
+    plt.figure(figsize=(12, 8))
+    plt.title("Score")
+    plt.barh(indices, score, .2, label="score", color='navy')
+    plt.barh(indices, fscore, .2, label="fscore", color='darkgreen')
+    plt.barh(indices + .3, training_time, .2, label="training time",
+            color='c')
+    plt.barh(indices + .6, test_time, .2, label="test time", color='darkorange')
+    plt.yticks(())
+    plt.legend(loc='best')
+    plt.subplots_adjust(left=.25)
+    plt.subplots_adjust(top=.95)
+    plt.subplots_adjust(bottom=.05)
 
-for i, c in zip(indices, clf_names):
-    plt.text(-.3, i, c)
+    for i, c in zip(indices, clf_names):
+        plt.text(-.3, i, c)
 
-plt.show()
+    plt.show()

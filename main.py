@@ -1,11 +1,15 @@
 
 import pandas as pd
 import numpy as np
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.naive_bayes import GaussianNB
+
+from functools import reduce
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.naive_bayes import BernoulliNB
 
 import os
 
+stopwords = [',', '.', '\\', '"', '\'', '*']
+strip_stopwords = False
 
 def preprocess_line_(line):
     for w in line.split(' '):
@@ -15,7 +19,10 @@ def preprocess_line_(line):
         else:
             line = line.replace(w, w.lower())
 
-    return line
+    if strip_stopwords is True:
+        return reduce(lambda line, sw: line.replace(sw, ''), stopwords, line)
+    else:
+        return line
 
 
 def preprocess(data):
@@ -33,12 +40,11 @@ def transformer(classifier, vectorizer):
 
 
 def train(train_data, should_ignore_cases=True):
-    stopwords = [',', '.', ' ', '\\', '"', '\'', '*']
 
-    vectorizer = CountVectorizer(analyzer='word', decode_error='strict',
+    vectorizer = TfidfVectorizer(analyzer='word', decode_error='strict',
             encoding='utf-8', input='content',
             lowercase=should_ignore_cases, max_df=1.0, max_features=None, min_df=1,
-            ngram_range=(1, 3), stop_words=stopwords,
+            ngram_range=(1, 1), stop_words=stopwords,
             strip_accents='unicode')
 
     vectorizer.fit(train_data['message'].to_numpy())
@@ -49,7 +55,7 @@ def train(train_data, should_ignore_cases=True):
     X = vectorizer.transform(raw_train_data).toarray()
     Y = train_data['label'].to_numpy()
 
-    classifier = GaussianNB()
+    classifier = BernoulliNB(alpha=.05)
     classifier.fit(X, Y)
 
     return {
