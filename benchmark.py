@@ -1,5 +1,4 @@
 
-from main import load_data, stopwords
 
 import logging
 import numpy as np
@@ -9,7 +8,6 @@ from time import time
 import matplotlib.pyplot as plt
 
 from sklearn.datasets import fetch_20newsgroups
-from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer, HashingVectorizer
 from sklearn.feature_selection import SelectFromModel
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.linear_model import RidgeClassifier
@@ -25,19 +23,8 @@ from sklearn.utils.extmath import density
 from sklearn import metrics
 from sklearn.metrics import f1_score
 
-
-def get_vectorizer():
-    kwargs = {
-        'analyzer': 'char_wb',
-        'decode_error': 'strict',
-        'encoding': 'utf-8',
-        'input': 'content',
-        'stop_words': stopwords,
-        'strip_accents': 'unicode',
-    }
-
-    return CountVectorizer(**kwargs, ngram_range=(2,3))
-    # return TfidfVectorizer(**kwargs, lowercase=True, min_df=1, sublinear_tf=True, max_df=0.5, ngram_range=(1,2))
+from main import load_data
+from vectorizer import get_vectorizer
 
 # Display progress logs on stdout
 logging.basicConfig(level=logging.INFO,

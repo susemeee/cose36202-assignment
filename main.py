@@ -6,10 +6,10 @@ from functools import reduce
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import BernoulliNB
 
-import os
+from vectorizer import strip_stopwords, get_vectorizer
+from classifier import get_classifier
 
-stopwords = [',', '.', '\\', '"', '\'', '*']
-strip_stopwords = False
+import os
 
 def preprocess_line_(line):
     for w in line.split(' '):
@@ -41,12 +41,7 @@ def transformer(classifier, vectorizer):
 
 def train(train_data, should_ignore_cases=True):
 
-    vectorizer = TfidfVectorizer(analyzer='word', decode_error='strict',
-            encoding='utf-8', input='content',
-            lowercase=should_ignore_cases, max_df=1.0, max_features=None, min_df=1,
-            ngram_range=(1, 1), stop_words=stopwords,
-            strip_accents='unicode')
-
+    vectorizer = get_vectorizer()
     vectorizer.fit(train_data['message'].to_numpy())
     features_count = len(vectorizer.get_feature_names())
 
@@ -55,7 +50,7 @@ def train(train_data, should_ignore_cases=True):
     X = vectorizer.transform(raw_train_data).toarray()
     Y = train_data['label'].to_numpy()
 
-    classifier = BernoulliNB(alpha=.05)
+    classifier = get_classifier()
     classifier.fit(X, Y)
 
     return {
