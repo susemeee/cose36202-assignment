@@ -11,21 +11,21 @@ from classifier import get_classifier
 
 import os
 
-def preprocess_line_(line):
-    for w in line.split(' '):
-        # all caps has special meaning
-        if w.upper() == w:
-            pass
-        else:
-            line = line.replace(w, w.lower())
-
-    if strip_stopwords is True:
-        return reduce(lambda line, sw: line.replace(sw, ''), stopwords, line)
-    else:
-        return line
-
 
 def preprocess(data):
+    def preprocess_line_(line):
+        for w in line.split(' '):
+            # all caps has special meaning
+            if w.upper() == w:
+                pass
+            else:
+                line = line.replace(w, w.lower())
+
+        if strip_stopwords is True:
+            return reduce(lambda line, sw: line.replace(sw, ''), stopwords, line)
+        else:
+            return line
+
     data['message'] = data['message'].apply(preprocess_line_)
     return data
 
@@ -33,10 +33,6 @@ def preprocess(data):
 def load_data(filename, test=False, **kwargs):
     data = pd.read_csv(os.path.join(os.path.dirname(__file__), 'data', filename), **kwargs)
     return preprocess(data)
-
-
-def transformer(classifier, vectorizer):
-    return lambda message: classifier.predict(vectorizer.transform([message]).toarray())
 
 
 def train(train_data, should_ignore_cases=True):
@@ -60,7 +56,6 @@ def train(train_data, should_ignore_cases=True):
 
 
 def test(test_data, classifier, vectorizer, is_debug=True):
-    # tr = transformer(classifier, vectorizer)
 
     raw_test_data = test_data['message'].to_numpy()
     X = vectorizer.transform(raw_test_data).toarray()
