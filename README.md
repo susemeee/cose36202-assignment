@@ -39,13 +39,16 @@ scikit-learn에서 제공하는 classifier와 vectorizer 구현체에는 공통�
 ### 2-1. Bag of Words
 
 
-### 2-2. n-gram
+### 2-2. TF-IDF
 
 
-### 2-3. 적절한 Vectorizer 선택하기
+### 2-3. n-gram
 
 
-### 2-4. 적절한 Classifier 선택하기
+### 2-4. Support Vector Machine
+
+
+### 2-5. SGD Learning
 
 
 ## 3. 코드 실행 및 환경 설정법
