@@ -61,6 +61,8 @@ TF-IDF(Term Frequency - Inverse Document Frequency)는 단순히 단어의 occur
 2. train set에 알파벳 / 영어단어가 아닌 숫자(전화번호 등), 특수기호, 오타 등의 case가 많았습니다. character embedding이 OOV Word / 오타에 대해 더 핸들링을 잘 하기 때문에, 더 좋은 결과값이 나왔던 것입니다.
 3. character embedding에 n-gram을 적용하였기에 word 단위의 데이터도 어느정도 고려할 수 있었습니다.
 
+scikit-learn에서는 character embedding을 두 가지 다른 방식으로 구현하고 있는데(`analyzer` argument로 지정), 첫 번째는 문장 전체 단위를 스캔하는 `char`이고, 두 번째는 문장 속 단어 내에서만 n-gram을 만드는 `char_wb`가 있었습니다. `char_wb`의 성능이 더 좋았는데, 서로 다른 맥락의 단어가 같은 vector 내로 섞이지 않아 noise가 줄어들기 때문이라고 판단하였습니다.
+
 
 ### 2-4. Support Vector Machine & SGD Learning
 
