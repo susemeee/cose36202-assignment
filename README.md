@@ -39,16 +39,16 @@ scikit-learn에서 제공하는 classifier와 vectorizer 구현체에는 공통�
 
 기계학습 Report
 
-## 2-1. Bag of Words (BOW)
+### 2-1. Bag of Words (BOW)
 
 어떤 문장이 스팸인지 아닌지를 분별하는 것은 classification 문제에 속합니다. classifier를 사용하기 위해서는, 자연어로 이루어진 문장을 feature vector로 변환하는 작업이 필요합니다. 문장을 feature vector로 변환하는 모델 중, 단어의 빈도수를 고려하는 Bag of Words (BOW) 모델을 먼저 사용해 보았습니다. scikit-learn의 CountVectorizer 클래스는 단어의 빈도수를 세어 BOW 모델을 만드는 모델을 구현하여, 먼저 이를 사용해 보았습니다.
 
-## 2-2. TF-IDF
+### 2-2. TF-IDF
 
 TF-IDF(Term Frequency - Inverse Document Frequency)는 단순히 단어의 occurance만을 고려하는 CountVectorizer 모델과 달리, 전체 문서(데이터셋)에서 자주 쓰이는 단어들에 대해 penalty를 주는 모델입니다. 즉, '자주 등장하는 단어'에 대해서는 CountVectorizer와 같이 가중치를 높이지만, '전체 문서에서 자주 등장하는 단어'는 classification에 큰 의미를 주지 못 한다고 보아 가중치를 줄입니다. scikit-learn에서는 TfIdfVectorizer 클래스를 통해 이 모델을 구현하였습니다. TfIdfVectorizer를 사용했을 때 조금 더 높은 accuracy를 얻을 수 있었는데, 이로서 전체적으로 자주 등장하는 단어는 classification에 큰 기여를 하지 않는다는것을 알 수 있었습니다.
 또한, 전체적으로 너무 자주 등장하는 단어는 classification에 의미가 없다고 보아 vocabulary에서 제외할 수도 있습니다. TfIdfVectorizer에서는 max_df argument를 통해 특정 비율 이상 등장하는 단어를 제외할 수 있습니다. 이를 통해 Vectorizer의 모델을 조금 더 간단하게 할 수 있었습니다.
 
-## 2-3. Word Embedding vs Character Embedding
+### 2-3. Word Embedding vs Character Embedding
 
 2-3에서 사용한 TF-IDF Vectorizer는 단어 단위로 feature vectorizer를 생성합니다. 단어 단위 이외에도 character 단위로 feature vector를 생성할 수 있는데, 이를 Character Embedding이라고 합니다. 또한, 여러 단어 / character에 대해서도 feature vector를 *따로* 생성하는 n-gram을 적용해볼 수도 있었는데, 이를 정리하자면, Vectorizer에대해서 다음과 같은 4가지 조합을 실험해볼 수 있었습니다.
 
@@ -64,7 +64,7 @@ TF-IDF(Term Frequency - Inverse Document Frequency)는 단순히 단어의 occur
 3. character embedding에 n-gram을 적용하였기에 word 단위의 데이터도 어느정도 고려할 수 있었습니다.
 
 
-## 2-4. Support Vector Machine & SGD Learning
+### 2-4. Support Vector Machine & SGD Learning
 
 Classifier로는 Support Vector Machine을 사용하였습니다. 데이터의 특성을 보았을 때 linear하게 decision boundary가 정해져도 classification할 수 있다고 생각하였기 때문입니다. scikit-learn에서는 SVC, LinearSVC 클래스로 SVM을 구현하였습니다. SVM이 사용하는 loss function으로는 기본값인 hinge loss를 사용하였을 때 결과가 가장 좋았습니다. decision boundary의 smoothness를 조절하여 약간의 오차를 허용함으로써 overfitting을 줄이는 soft margin SVM 또한 사용할 수 있었는데, 이는 LinearSVC 클래스의 C parameter로 조절할 수 있었습니다.
 SVM을 Stochastic Gradient Descent를 사용하여 학습시키는 방법이 있어 함께 적용해 보았습니다. scikit-learn에서는 SGDClassifier 클래스에 구현되어있고, 이를 사용함으로서 별도의 test dataset이 주어졌을 때 모델이 더 잘 대응될 수 있다는 생각이 들어 LinearSVC 대신 적용하였습니다.
