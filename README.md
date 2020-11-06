@@ -37,8 +37,6 @@ scikit-learn에서 제공하는 classifier와 vectorizer 구현체에는 공통�
 
 ## 2. 문제에 대한 접근법
 
-기계학습 Report
-
 ### 2-1. Bag of Words (BOW)
 
 어떤 문장이 스팸인지 아닌지를 분별하는 것은 classification 문제에 속합니다. classifier를 사용하기 위해서는, 자연어로 이루어진 문장을 feature vector로 변환하는 작업이 필요합니다. 문장을 feature vector로 변환하는 모델 중, 단어의 빈도수를 고려하는 Bag of Words (BOW) 모델을 먼저 사용해 보았습니다. scikit-learn의 CountVectorizer 클래스는 단어의 빈도수를 세어 BOW 모델을 만드는 모델을 구현하여, 먼저 이를 사용해 보았습니다.
