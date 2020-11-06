@@ -10,6 +10,7 @@ def get_vectorizer():
         'decode_error': 'strict',
         'encoding': 'utf-8',
         'input': 'content',
+        'stop_words': stopwords,
         'strip_accents': 'unicode',
     }
 
