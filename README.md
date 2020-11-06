@@ -19,6 +19,7 @@ main.py에서는 크게 다음과 같은 역할을 수행합니다.
 2. DataFrame 내의 data(문장)를 전처리 (`preprocess()` 함수가 수행)
 3. 모델 학습 (`train()` 함수가 수행)
 4. 모델 테스트 (`test()` 함수가 수행)
+5. 결과값을 `out.csv`에 저장
 
 ### 1-2. classifer와 vectorizer
 

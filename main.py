@@ -1,12 +1,9 @@
 
 import pandas as pd
 import numpy as np
-
 from functools import reduce
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.naive_bayes import BernoulliNB
 
-from vectorizer import strip_stopwords, get_vectorizer
+from vectorizer import stopwords, strip_stopwords, get_vectorizer
 from classifier import get_classifier
 
 import os
@@ -14,13 +11,6 @@ import os
 
 def preprocess(data):
     def preprocess_line_(line):
-        for w in line.split(' '):
-            # all caps has special meaning
-            if w.upper() == w:
-                pass
-            else:
-                line = line.replace(w, w.lower())
-
         if strip_stopwords is True:
             return reduce(lambda line, sw: line.replace(sw, ''), stopwords, line)
         else:
@@ -39,7 +29,6 @@ def train(train_data, should_ignore_cases=True):
 
     vectorizer = get_vectorizer()
     vectorizer.fit(train_data['message'].to_numpy())
-    features_count = len(vectorizer.get_feature_names())
 
     raw_train_data = train_data['message'].to_numpy()
 
@@ -55,16 +44,11 @@ def train(train_data, should_ignore_cases=True):
     }
 
 
-def test(test_data, classifier, vectorizer, is_debug=True):
+def test(test_data, classifier, vectorizer):
 
     raw_test_data = test_data['message'].to_numpy()
     X = vectorizer.transform(raw_test_data).toarray()
-
     Y = classifier.predict(X)
-
-    if is_debug == True:
-        from debug import debug
-        debug(raw_test_data, load_data, Y)
 
     test_result = pd.DataFrame(Y, columns=['label'])
     test_result.insert(0, 'id', test_data['id'])

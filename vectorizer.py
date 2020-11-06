@@ -14,5 +14,4 @@ def get_vectorizer():
         'strip_accents': 'unicode',
     }
 
-    # return CountVectorizer(**kwargs, ngram_range=(2,4))
     return TfidfVectorizer(**kwargs, lowercase=True, min_df=1, sublinear_tf=True, max_df=0.3, ngram_range=(2,6))
